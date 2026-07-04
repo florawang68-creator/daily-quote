@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>日日金句</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="日日金句">
+<meta name="theme-color" content="#A63D2F">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=EB+Garamond:ital,wght@0,400;1,400&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper: #EAE3CE;
+    --paper-deep: #DED5B9;
+    --ink: #22261F;
+    --ink-soft: #4E5348;
+    --ink-faint: #8A8C77;
+    --seal: #A63D2F;
+    --seal-deep: #8C2F23;
+    --jade: #3F6659;
+    --gold: #AD8A4E;
+    --wood: #5B4630;
+    --wood-dark: #3E301F;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans TC", sans-serif;
+    overscroll-behavior: none;
+  }
+  .stage{
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: max(24px, env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+  }
+  header.top{ text-align: center; margin-bottom: 20px; }
+  .eyebrow{ font-family:"JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.3em; color: var(--ink-faint); }
+  h1.brand{ font-family:"Noto Serif TC",serif; font-weight:900; font-size: 26px; margin: 6px 0 0; letter-spacing:0.06em; }
+
+  .scroll-wrap{ position: relative; width: 100%; max-width: 420px; filter: drop-shadow(0 14px 26px rgba(34,38,31,0.2)); }
+  .roller{ height: 16px; border-radius: 8px; background: linear-gradient(180deg,#7A5E3C,var(--wood) 45%,var(--wood-dark)); position: relative; }
+  .roller::before,.roller::after{ content:""; position:absolute; top:50%; transform:translateY(-50%); width:11px; height:24px; border-radius:6px; background:linear-gradient(180deg,#8A6C46,var(--wood-dark)); }
+  .roller::before{ left:-5px; } .roller::after{ right:-5px; }
+  .roller.bottom{ margin-top:-2px; }
+
+  .card{
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 18%), var(--paper-deep);
+    border-left: 1px solid rgba(34,38,31,0.08);
+    border-right: 1px solid rgba(34,38,31,0.08);
+    padding: 30px 22px 40px; min-height: 300px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 16px;
+  }
+  .card::before{ content:""; position:absolute; inset:8px; border:1px solid rgba(173,138,78,0.35); pointer-events:none; }
+
+  .date-line{ font-family:"JetBrains Mono",monospace; font-size: 11px; color: var(--jade); letter-spacing: 0.14em; display:flex; align-items:center; gap:8px; }
+  .date-line .rule{ width:20px; height:1px; background:var(--gold); display:inline-block; }
+
+  .zh-quote{ font-family:"Noto Serif TC",serif; font-weight:800; font-size: clamp(20px, 6vw, 26px); line-height: 1.55; max-width: 320px; transition: opacity .2s; }
+  .en-quote{ font-family:"EB Garamond",serif; font-style: italic; font-size: 14.5px; color: var(--ink-soft); max-width: 300px; line-height: 1.55; transition: opacity .2s; }
+  .source-line{ font-size: 11px; color: var(--ink-faint); }
+
+  .seal{
+    position: absolute; bottom: 16px; right: 18px; width: 44px; height: 44px; border-radius: 5px;
+    background: var(--seal); color:#F4E9DD; font-family:"Noto Serif TC",serif; font-weight:800; font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 2px 0 rgba(0,0,0,.15), 0 6px 12px rgba(140,47,35,.35);
+    transform: rotate(-3deg);
+  }
+
+  .ribbon{
+    position:absolute; top:-4px; left:22px; width:20px; height:32px; background:var(--jade);
+    clip-path: polygon(0 0,100% 0,100% 100%,50% 78%,0 100%); cursor:pointer; opacity:.35;
+  }
+  .ribbon.active{ opacity:1; background: var(--seal); }
+
+  .controls{ margin-top: 20px; display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:420px; }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .chip{ font-size:12.5px; padding:6px 14px; border-radius:999px; border:1px solid rgba(34,38,31,.22); background:transparent; color:var(--ink-soft); }
+  .chip.active{ background:var(--jade); border-color:var(--jade); color:#F4E9DD; }
+
+  .btn-row{ display:flex; align-items:center; gap:10px; width: 100%; }
+  .brush-btn{
+    flex: 1; font-family:"Noto Serif TC",serif; font-weight:700; font-size:14px; letter-spacing:.06em;
+    color:#F4E9DD; background:var(--ink); border:none; padding:13px 10px; border-radius: 6px;
+  }
+  .brush-btn.secondary{ background: var(--seal); }
+  .collect-count{ font-family:"JetBrains Mono",monospace; font-size: 11px; color: var(--ink-faint); }
+
+  footer.note{ margin-top: 22px; font-family:"EB Garamond",serif; font-style: italic; font-size: 11.5px; color: var(--ink-faint); text-align:center; max-width: 320px; }
+
+  /* ---- wallpaper preview overlay ---- */
+  .overlay{
+    position: fixed; inset: 0; background: rgba(20,20,16,0.92);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px; gap: 16px;
+  }
+  .overlay.show{ display: flex; }
+  .overlay img{ max-width: 88vw; max-height: 62vh; border-radius: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+  .overlay .hint{ color: #F4E9DD; font-size: 13px; text-align: center; max-width: 300px; line-height: 1.6; }
+  .overlay .row{ display:flex; gap: 10px; }
+  .overlay button{ font-family:"Noto Sans TC",sans-serif; font-size: 13px; padding: 10px 18px; border-radius: 999px; border: none; }
+  .overlay .share{ background: var(--seal); color:#F4E9DD; }
+  .overlay .close{ background: transparent; color:#F4E9DD; border: 1px solid rgba(244,233,221,0.5); }
+
+  canvas#wallpaperCanvas{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <header class="top">
+    <div class="eyebrow">DAILY WISDOM · 中英對照</div>
+    <h1 class="brand">日日金句</h1>
+  </header>
+
+  <div class="scroll-wrap">
+    <div class="roller"></div>
+    <div class="card">
+      <div class="ribbon" id="ribbon"></div>
+      <div class="date-line"><span class="rule"></span><span id="dateLabel"></span><span class="rule"></span></div>
+      <div class="zh-quote" id="zhQuote"></div>
+      <div class="en-quote" id="enQuote"></div>
+      <div class="source-line" id="sourceLine"></div>
+      <div class="seal" id="seal"></div>
+    </div>
+    <div class="roller bottom"></div>
+  </div>
+
+  <div class="controls">
+    <div class="chips" id="chips"></div>
+    <div class="btn-row">
+      <button class="brush-btn" id="nextBtn">換一句</button>
+      <button class="brush-btn secondary" id="wallpaperBtn">產生桌布圖片</button>
+    </div>
+    <div class="collect-count" id="collectCount">已收藏 0 句</div>
+  </div>
+
+  <footer class="note">"一日一句，未必改變人生，但值得停下來，讀一讀。"</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <img id="previewImg" alt="今日金句桌布">
+  <div class="hint">長按圖片 →「加入照片」，再到手機設定裡選為桌布即可。</div>
+  <div class="row">
+    <button class="share" id="shareBtn">分享 / 儲存</button>
+    <button class="close" id="closeOverlay">關閉</button>
+  </div>
+</div>
+
+<canvas id="wallpaperCanvas"></canvas>
+
+<script>
+const QUOTES = [
+  // 勵志 / 正能量
+  {zh:"天行健，君子以自強不息。", en:"As heaven's movement is ever vigorous, a noble one ceaselessly strives.", cat:"勵志", src:"《周易》"},
+  {zh:"千里之行，始於足下。", en:"A journey of a thousand miles begins with a single step.", cat:"勵志", src:"老子"},
+  {zh:"山重水複疑無路，柳暗花明又一村。", en:"Where hills and streams seem to end all paths, dark willows and bright flowers reveal one more village.", cat:"勵志", src:"陸游"},
+  {zh:"不積跬步，無以至千里。", en:"Without gathering small steps, one cannot travel a thousand miles.", cat:"勵志", src:"荀子"},
+  {zh:"只要路是對的，就不怕路遠。", en:"If the road is right, distance is no obstacle.", cat:"勵志", src:null},
+  {zh:"逆風的方向，更適合飛翔。", en:"Flying against the wind is sometimes the better direction.", cat:"勵志", src:null},
+  {zh:"種一棵樹最好的時間是十年前，其次是現在。", en:"The best time to plant a tree was ten years ago; the next best time is now.", cat:"勵志", src:"諺語"},
+  {zh:"失敗不是倒下，而是拒絕起身。", en:"Failure is not falling down, but refusing to rise.", cat:"勵志", src:null},
+  {zh:"慢慢來，比較快。", en:"Slow and steady really does get there faster.", cat:"勵志", src:null},
+  {zh:"每一次的堅持，都是離放棄最遠的距離。", en:"Every act of persistence is one step further from giving up.", cat:"勵志", src:null},
+  {zh:"心若向陽，無畏悲傷。", en:"If the heart faces the sun, it need not fear the shadows.", cat:"勵志", src:null},
+  {zh:"星光不問趕路人，時光不負有心人。", en:"Starlight asks nothing of the traveler; time never fails the sincere.", cat:"勵志", src:"諺語"},
+
+  // 哲學 / 人生智慧
+  {zh:"知人者智，自知者明。", en:"Knowing others is wisdom; knowing yourself is enlightenment.", cat:"哲學", src:"老子"},
+  {zh:"吾生也有涯，而知也無涯。", en:"Life is bounded, but knowledge has no bound.", cat:"哲學", src:"莊子"},
+  {zh:"禍兮福之所倚，福兮禍之所伏。", en:"Misfortune leans on fortune; fortune hides misfortune within it.", cat:"哲學", src:"老子"},
+  {zh:"己所不欲，勿施於人。", en:"Do not impose on others what you yourself do not desire.", cat:"哲學", src:"孔子"},
+  {zh:"靜以修身，儉以養德。", en:"Stillness cultivates the self; frugality nurtures virtue.", cat:"哲學", src:"諸葛亮"},
+  {zh:"上善若水，水善利萬物而不爭。", en:"The highest good is like water, benefiting all things without contending.", cat:"哲學", src:"老子"},
+  {zh:"人生天地之間，若白駒過隙。", en:"A life between heaven and earth passes like a white colt glimpsed through a crack.", cat:"哲學", src:"莊子"},
+  {zh:"未知生，焉知死。", en:"Not yet understanding life, how can one understand death?", cat:"哲學", src:"孔子"},
+  {zh:"執著未必到達；懂得放下，才能看見更遠。", en:"Holding on tightly rarely guarantees arrival; learning to let go reveals a farther view.", cat:"哲學", src:null},
+  {zh:"淡泊以明志，寧靜以致遠。", en:"Simplicity clarifies purpose; stillness reaches far.", cat:"哲學", src:"諸葛亮"},
+  {zh:"大智若愚，大巧若拙。", en:"Great wisdom appears foolish; great skill appears clumsy.", cat:"哲學", src:"老子"},
+  {zh:"世事如棋，一著一悟。", en:"Life is like a chess game — every move teaches something.", cat:"哲學", src:null},
+
+  // 綜合
+  {zh:"願你眼裡有光，心中有海。", en:"May your eyes hold light, and your heart hold an ocean.", cat:"綜合", src:null},
+  {zh:"人間值得，未來可期。", en:"This world is worth it, and the future is worth waiting for.", cat:"綜合", src:null},
+  {zh:"花不能同時盛開，但總有再開的季節。", en:"Flowers cannot bloom all at once, but their season always returns.", cat:"綜合", src:null},
+  {zh:"愛出者愛返，福往者福來。", en:"Love given returns as love; blessings sent return as blessings.", cat:"綜合", src:"諺語"},
+  {zh:"心之所向，日光所至。", en:"Wherever the heart turns, sunlight follows.", cat:"綜合", src:null},
+  {zh:"你若盛開，蝴蝶自來。", en:"If you bloom, the butterflies will come on their own.", cat:"綜合", src:null},
+  {zh:"慢下來，才聽得見自己的心跳。", en:"Only by slowing down can you hear your own heartbeat.", cat:"綜合", src:null},
+  {zh:"世界很大，值得你慢慢走。", en:"The world is vast — worth wandering slowly.", cat:"綜合", src:null},
+  {zh:"溫柔的人，自帶光芒。", en:"A gentle heart carries its own light.", cat:"綜合", src:null},
+  {zh:"生活不會辜負，每一個認真的人。", en:"Life never fails those who live it earnestly.", cat:"綜合", src:null},
+  {zh:"心寬一寸，路寬一丈。", en:"An inch more openness in the heart, a mile more room on the road.", cat:"綜合", src:"諺語"},
+  {zh:"且以深情共白首。", en:"May we grow old together, in deep and quiet affection.", cat:"綜合", src:null},
+
+  // 文學 / 公版經典格言
+  {zh:"寵辱不驚，看庭前花開花落；去留無意，望天上雲卷雲舒。", en:"Untroubled by praise or blame, watch the flowers bloom and fall in the courtyard; unconcerned with staying or leaving, watch the clouds gather and scatter above.", cat:"文學", src:"《菜根譚》"},
+  {zh:"咬得菜根，百事可做。", en:"One who can endure plain fare can accomplish anything.", cat:"文學", src:"《菜根譚》"},
+  {zh:"路徑窄處，留一步與人行；滋味濃時，減三分讓人嘗。", en:"On a narrow path, leave room for others to pass; when flavor runs rich, save a share for others to taste.", cat:"文學", src:"《菜根譚》"},
+  {zh:"人生但知行好事，莫要問前程。", en:"In life, simply do what is good; do not ask what lies ahead.", cat:"文學", src:"《增廣賢文》"},
+  {zh:"相逢好似初相識，到老終無怨恨心。", en:"Meet each time as though for the first time, and to the end there will be no resentment.", cat:"文學", src:"《增廣賢文》"},
+  {zh:"近水知魚性，近山識鳥音。", en:"Live by the water and you learn the ways of fish; live by the mountain and you learn the songs of birds.", cat:"文學", src:"《增廣賢文》"},
+  {zh:"種瓜得瓜，種豆得豆。", en:"Plant melons and reap melons; plant beans and reap beans.", cat:"文學", src:"《增廣賢文》"},
+  {zh:"知足者貧亦樂，不知足者富亦憂。", en:"The contented, though poor, are joyful; the discontented, though rich, are troubled.", cat:"文學", src:"《增廣賢文》"},
+  {zh:"當家才知柴米貴，養兒方曉父母恩。", en:"Only in running a household do you learn the cost of daily rice; only in raising a child do you learn a parent's love.", cat:"文學", src:"《增廣賢文》"},
+  {zh:"讀萬卷書，行萬里路。", en:"Read ten thousand books, walk ten thousand miles.", cat:"文學", src:"古語"},
+  {zh:"良藥苦口利於病，忠言逆耳利於行。", en:"Good medicine tastes bitter but heals; honest advice sounds harsh but guides right action.", cat:"文學", src:"《孔子家語》"},
+
+  // 文學 / 原創現代短句
+  {zh:"把整個夏天，摺進一封未寄出的信裡。", en:"Fold the whole summer into a letter never sent.", cat:"文學", src:null},
+  {zh:"風把心事吹遠了，剩下的，叫作安靜。", en:"The wind carried the worries far away; what remained, we call quiet.", cat:"文學", src:null},
+  {zh:"你是我讀過最慢的一本書。", en:"You are the slowest book I have ever read.", cat:"文學", src:null},
+  {zh:"雨停之後，路燈開始練習發光。", en:"After the rain stopped, the streetlights began practicing how to shine.", cat:"文學", src:null},
+  {zh:"我在你的名字裡，種了一整座森林。", en:"In your name, I planted an entire forest.", cat:"文學", src:null},
+  {zh:"時間是最溫柔的收信人，什麼都聽，什麼都不回。", en:"Time is the gentlest recipient of letters — it listens to everything, and answers nothing.", cat:"文學", src:null},
+  {zh:"有些思念，適合放在口袋，不適合說出口。", en:"Some longings belong in a pocket, not in words.", cat:"文學", src:null},
+  {zh:"月光把整條巷子，洗成一張安靜的紙。", en:"Moonlight washed the whole alley into a quiet sheet of paper.", cat:"文學", src:null},
+];
+
+const CATS = ["全部","勵志","哲學","文學","綜合"];
+const SEAL_CHAR = {"勵志":"勵","哲學":"哲","文學":"文","綜合":"合","全部":"日"};
+
+let activeCat = "全部";
+let current = null;
+let collected = new Set();
+
+function poolFor(cat){ return cat === "全部" ? QUOTES : QUOTES.filter(q => q.cat === cat); }
+
+function dayIndexSeed(){
+  const d = new Date();
+  return d.getFullYear() * 372 + (d.getMonth()+1) * 31 + d.getDate();
+}
+
+function formatDate(){
+  const d = new Date();
+  const weekMap = ["日","一","二","三","四","五","六"];
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} 週${weekMap[d.getDay()]}`;
+}
+
+function pickToday(cat){
+  const pool = poolFor(cat);
+  return pool[dayIndexSeed() % pool.length];
+}
+
+function pickRandom(cat, exclude){
+  const pool = poolFor(cat);
+  if (pool.length <= 1) return pool[0];
+  let q;
+  do { q = pool[Math.floor(Math.random()*pool.length)]; } while (exclude && q === exclude);
+  return q;
+}
+
+function keyOf(q){ return q.zh; }
+
+function renderQuote(q, animate){
+  current = q;
+  const zhEl = document.getElementById("zhQuote");
+  const enEl = document.getElementById("enQuote");
+  const srcEl = document.getElementById("sourceLine");
+  const sealEl = document.getElementById("seal");
+  const ribbon = document.getElementById("ribbon");
+
+  const doRender = () => {
+    zhEl.textContent = q.zh;
+    enEl.textContent = q.en;
+    srcEl.textContent = q.src ? `—— ${q.src}` : "—— 佚名";
+    sealEl.textContent = SEAL_CHAR[q.cat] || "句";
+    ribbon.classList.toggle("active", collected.has(keyOf(q)));
+    zhEl.style.opacity = 1;
+    enEl.style.opacity = 1;
+  };
+
+  if (animate){
+    zhEl.style.opacity = 0; enEl.style.opacity = 0;
+    setTimeout(doRender, 160);
+  } else { doRender(); }
+}
+
+function renderChips(){
+  const wrap = document.getElementById("chips");
+  wrap.innerHTML = "";
+  CATS.forEach(cat => {
+    const b = document.createElement("button");
+    b.className = "chip" + (cat === activeCat ? " active" : "");
+    b.textContent = cat;
+    b.onclick = () => {
+      activeCat = cat;
+      renderChips();
+      renderQuote(pickToday(activeCat), true);
+    };
+    wrap.appendChild(b);
+  });
+}
+
+function updateCollectCount(){
+  document.getElementById("collectCount").textContent = `已收藏 ${collected.size} 句`;
+}
+
+document.getElementById("dateLabel").textContent = formatDate();
+renderChips();
+renderQuote(pickToday(activeCat), false);
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  renderQuote(pickRandom(activeCat, current), true);
+});
+
+document.getElementById("ribbon").addEventListener("click", () => {
+  if (!current) return;
+  const k = keyOf(current);
+  collected.has(k) ? collected.delete(k) : collected.add(k);
+  document.getElementById("ribbon").classList.toggle("active", collected.has(k));
+  updateCollectCount();
+});
+
+// ---------------- 桌布圖片生成 ----------------
+
+function wrapText(ctx, text, maxWidth){
+  const chars = text.split("");
+  const lines = [];
+  let line = "";
+  for (const ch of chars){
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line.length > 0){
+      lines.push(line);
+      line = ch;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function wrapTextByWords(ctx, text, maxWidth){
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+  for (const w of words){
+    const test = line ? line + " " + w : w;
+    if (ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = w;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function generateWallpaperDataURL(q){
+  const dpr = Math.min(window.devicePixelRatio || 2, 3);
+  const W = Math.round((window.innerWidth || 390) * dpr);
+  const H = Math.round((window.innerHeight || 844) * dpr);
+
+  const canvas = document.getElementById("wallpaperCanvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  // background
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, "#EFE9D8");
+  grad.addColorStop(1, "#DED5B9");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // decorative border
+  const m = W * 0.07;
+  ctx.strokeStyle = "rgba(173,138,78,0.5)";
+  ctx.lineWidth = Math.max(1, W*0.0025);
+  ctx.strokeRect(m, m, W-2*m, H-2*m);
+
+  // date label
+  ctx.fillStyle = "#3F6659";
+  ctx.font = `${Math.round(W*0.032)}px monospace`;
+  ctx.textAlign = "center";
+  ctx.fillText(formatDate(), W/2, H*0.22);
+
+  // zh quote
+  ctx.fillStyle = "#22261F";
+  ctx.font = `800 ${Math.round(W*0.078)}px "Noto Serif TC", serif`;
+  const zhLines = wrapText(ctx, q.zh, W*0.72);
+  const zhLineHeight = W*0.11;
+  let y = H*0.42 - (zhLines.length-1)*zhLineHeight/2;
+  zhLines.forEach(line => { ctx.fillText(line, W/2, y); y += zhLineHeight; });
+
+  // en quote
+  ctx.fillStyle = "#4E5348";
+  ctx.font = `italic ${Math.round(W*0.038)}px "EB Garamond", serif`;
+  const enLines = wrapTextByWords(ctx, q.en, W*0.68);
+  const enLineHeight = W*0.055;
+  y += W*0.02;
+  enLines.forEach(line => { ctx.fillText(line, W/2, y); y += enLineHeight; });
+
+  // source
+  ctx.fillStyle = "#8A8C77";
+  ctx.font = `${Math.round(W*0.03)}px sans-serif`;
+  ctx.fillText(q.src ? `—— ${q.src}` : "—— 佚名", W/2, y + W*0.02);
+
+  // seal
+  const sealSize = W*0.12;
+  const sealX = W - m - sealSize*0.6;
+  const sealY = H - m - sealSize*1.4;
+  ctx.save();
+  ctx.translate(sealX, sealY);
+  ctx.rotate(-3 * Math.PI/180);
+  ctx.fillStyle = "#A63D2F";
+  const r = sealSize*0.12;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(-sealSize/2, -sealSize/2, sealSize, sealSize, r) : ctx.rect(-sealSize/2, -sealSize/2, sealSize, sealSize);
+  ctx.fill();
+  ctx.fillStyle = "#F4E9DD";
+  ctx.font = `800 ${Math.round(sealSize*0.5)}px "Noto Serif TC", serif`;
+  ctx.textBaseline = "middle";
+  ctx.fillText(SEAL_CHAR[q.cat] || "句", 0, sealSize*0.02);
+  ctx.restore();
+
+  return canvas.toDataURL("image/png");
+}
+
+document.getElementById("wallpaperBtn").addEventListener("click", () => {
+  const dataURL = generateWallpaperDataURL(current);
+  const img = document.getElementById("previewImg");
+  img.src = dataURL;
+  document.getElementById("overlay").classList.add("show");
+});
+
+document.getElementById("closeOverlay").addEventListener("click", () => {
+  document.getElementById("overlay").classList.remove("show");
+});
+
+document.getElementById("shareBtn").addEventListener("click", async () => {
+  const img = document.getElementById("previewImg");
+  try {
+    const res = await fetch(img.src);
+    const blob = await res.blob();
+    const file = new File([blob], "daily-quote.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: "今日金句" });
+    } else {
+      // fallback: open image in new tab so user can long-press save
+      window.open(img.src, "_blank");
+    }
+  } catch (e){
+    window.open(img.src, "_blank");
+  }
+});
+
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
